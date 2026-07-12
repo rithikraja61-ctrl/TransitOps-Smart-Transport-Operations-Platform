@@ -1,10 +1,14 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
 import { getRoleLabel } from '../constants/roles'
-import { clearAuthSession, getAuthSession } from '../lib/authStorage'
+import { signOut } from '../lib/auth'
+import { getAuthSession } from '../lib/authStorage'
+import { notifySuccess } from '../lib/notify'
 
 export function HomePlaceholderPage() {
   const navigate = useNavigate()
+  const [signingOut, setSigningOut] = useState(false)
   const session = getAuthSession()
 
   if (!session) {
@@ -13,9 +17,19 @@ export function HomePlaceholderPage() {
 
   const { user } = session
 
-  function handleSignOut() {
-    clearAuthSession()
-    navigate('/signin', { replace: true })
+  async function handleSignOut() {
+    if (signingOut) {
+      return
+    }
+
+    setSigningOut(true)
+    try {
+      await signOut()
+      notifySuccess('Signed out successfully')
+      navigate('/signin', { replace: true })
+    } finally {
+      setSigningOut(false)
+    }
   }
 
   return (
@@ -36,8 +50,8 @@ export function HomePlaceholderPage() {
         </ul>
 
         <div className="home-placeholder__actions">
-          <Button variant="secondary" onClick={handleSignOut}>
-            Sign out
+          <Button variant="secondary" onClick={handleSignOut} disabled={signingOut}>
+            {signingOut ? 'Signing out…' : 'Sign out'}
           </Button>
         </div>
       </div>

@@ -63,3 +63,10 @@ export async function authFetch(
     headers,
   })
 }
+
+export async function logout(): Promise<void> {
+  const response = await authFetch('/api/auth/logout', { method: 'POST' })
+  if (!response.ok) {
+    throw await parseErrorResponse(response)
+  }
+}
