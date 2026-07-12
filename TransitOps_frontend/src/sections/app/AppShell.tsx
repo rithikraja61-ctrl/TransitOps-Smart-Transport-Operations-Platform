@@ -137,7 +137,9 @@ export function AppShell() {
         </header>
 
         <main className="app-shell__main">
-          <Outlet />
+          <div key={location.pathname} className="app-shell__page">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

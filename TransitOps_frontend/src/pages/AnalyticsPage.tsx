@@ -1,7 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { Button } from '../components/Button'
+import { ChartCard } from '../components/charts/ChartCard'
+import { KpiCard } from '../components/KpiCard'
+import { LoadingState } from '../components/LoadingState'
 import { useSettings } from '../context/SettingsContext'
+import {
+  axisTickStyle,
+  CHART_ANIMATION,
+  CHART_COLORS,
+  chartMargin,
+  chartTooltipStyle,
+} from '../lib/chartTheme'
 import { ApiError, downloadAuthFile, getJson } from '../lib/api'
 import { notifyError } from '../lib/notify'
 import {
@@ -10,7 +29,7 @@ import {
   type ReportSummary,
 } from '../types/reports'
 
-const CHART_COLOR = '#f97316'
+const EXPENSE_COLORS = [CHART_COLORS.primary, CHART_COLORS.info, CHART_COLORS.success, CHART_COLORS.warning]
 
 export function AnalyticsPage() {
   const { formatters } = useSettings()
@@ -18,6 +37,7 @@ export function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const kpiLabels = useMemo(() => getAnalyticsKpiLabels(formatters), [formatters])
 
@@ -43,6 +63,7 @@ export function AnalyticsPage() {
     try {
       const data = await getJson<ReportSummary>('/api/reports/summary')
       setSummary(data)
+      setRefreshKey((prev) => prev + 1)
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load analytics'
       setError(message)
@@ -73,9 +94,9 @@ export function AnalyticsPage() {
   }
 
   return (
-    <>
+    <div>
       <header className="app-page__header">
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem' }}>
+        <div className="app-page__header-row">
           <div>
             <h1 className="app-page__title">Analytics</h1>
             <p className="app-page__subtitle">Operational insights and cost trends</p>
@@ -86,59 +107,76 @@ export function AnalyticsPage() {
         </div>
       </header>
 
-      <div className="vehicles-layout">
-        {loading ? <p className="app-loading">Loading analytics…</p> : null}
-        {error ? <p className="app-error">{error}</p> : null}
+      {loading ? <LoadingState label="Loading analytics…" variant="grid" count={4} /> : null}
+      {error ? <p className="app-error">{error}</p> : null}
 
-        {!loading && !error && summary ? (
-          <>
-            <div className="kpi-grid">
-              {kpiLabels.map(({ key, label }) => (
-                <article key={key} className="kpi-card">
-                  <p className="kpi-card__label">{label}</p>
-                  <p className="kpi-card__value">{formatKpiValue(key, summary[key])}</p>
-                </article>
-              ))}
-            </div>
+      {!loading && !error && summary ? (
+        <div key={refreshKey} className="analytics-layout">
+          <div className="kpi-grid kpi-grid--analytics">
+            {kpiLabels.map(({ key, label }, index) => (
+              <KpiCard
+                key={key}
+                label={label}
+                value={formatKpiValue(key, summary[key])}
+                index={index}
+              />
+            ))}
+          </div>
 
-            <section className="app-card">
-              <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
-                Monthly fuel spend
-              </h2>
-              {summary.monthlyFuelSpend.length === 0 ? (
-                <p className="app-card--empty">No fuel data yet.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={summary.monthlyFuelSpend}>
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => formatters.formatCurrency(Number(value))} />
-                    <Bar dataKey="amount" fill={CHART_COLOR} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </section>
+          <ChartCard title="Monthly fuel spend" subtitle="Trend by month" delay={200}>
+            {summary.monthlyFuelSpend.length === 0 ? (
+              <p className="app-card--empty">No fuel data yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={summary.monthlyFuelSpend} margin={chartMargin}>
+                  <defs>
+                    <linearGradient id="fuelSpendGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.95} />
+                      <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.35} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="4 4" vertical={false} />
+                  <XAxis dataKey="month" tick={axisTickStyle} axisLine={false} tickLine={false} />
+                  <YAxis tick={axisTickStyle} axisLine={false} tickLine={false} width={48} />
+                  <Tooltip formatter={(value) => formatters.formatCurrency(Number(value))} {...chartTooltipStyle} />
+                  <Bar
+                    dataKey="amount"
+                    fill="url(#fuelSpendGrad)"
+                    radius={[6, 6, 0, 0]}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
 
-            <section className="app-card">
-              <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
-                Expense breakdown
-              </h2>
-              {summary.expenseBreakdown.length === 0 ? (
-                <p className="app-card--empty">No expense data yet.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={summary.expenseBreakdown} layout="vertical">
-                    <XAxis type="number" />
-                    <YAxis type="category" dataKey="category" width={100} />
-                    <Tooltip formatter={(value) => formatters.formatCurrency(Number(value))} />
-                    <Bar dataKey="amount" fill={CHART_COLOR} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </section>
-          </>
-        ) : null}
-      </div>
-    </>
+          <ChartCard title="Expense breakdown" subtitle="By category" delay={300}>
+            {summary.expenseBreakdown.length === 0 ? (
+              <p className="app-card--empty">No expense data yet.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={summary.expenseBreakdown} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 8 }}>
+                  <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="4 4" horizontal={false} />
+                  <XAxis type="number" tick={axisTickStyle} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="category" width={110} tick={axisTickStyle} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(value) => formatters.formatCurrency(Number(value))} {...chartTooltipStyle} />
+                  <Bar
+                    dataKey="amount"
+                    radius={[0, 6, 6, 0]}
+                    animationDuration={CHART_ANIMATION.duration}
+                    animationEasing={CHART_ANIMATION.easing}
+                  >
+                    {summary.expenseBreakdown.map((entry, index) => (
+                      <Cell key={entry.category} fill={EXPENSE_COLORS[index % EXPENSE_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+        </div>
+      ) : null}
+    </div>
   )
 }

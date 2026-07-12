@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '../components/Button'
+import { ChartCard } from '../components/charts/ChartCard'
+import { DashboardFleetChart } from '../components/charts/DashboardFleetChart'
+import { DashboardTripsChart } from '../components/charts/DashboardTripsChart'
+import { UtilizationGauge } from '../components/charts/UtilizationGauge'
+import { KpiCard } from '../components/KpiCard'
+import { LoadingState } from '../components/LoadingState'
 import { SelectField } from '../components/SelectField'
 import { ApiError, getJson } from '../lib/api'
 import {
@@ -29,6 +35,7 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [vehicleType, setVehicleType] = useState('')
   const [vehicleStatus, setVehicleStatus] = useState<VehicleStatus | ''>('')
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const loadKpis = useCallback(async (type: string, status: VehicleStatus | '') => {
     setLoading(true)
@@ -48,6 +55,7 @@ export function DashboardPage() {
     try {
       const data = await getJson<DashboardKpis>(path)
       setKpis(data)
+      setRefreshKey((prev) => prev + 1)
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load dashboard'
       setError(message)
@@ -72,13 +80,13 @@ export function DashboardPage() {
   }
 
   return (
-    <>
+    <div>
       <header className="app-page__header">
         <h1 className="app-page__title">Dashboard</h1>
         <p className="app-page__subtitle">Fleet operations at a glance</p>
       </header>
 
-      <div className="dashboard-filters">
+      <div className="dashboard-filters app-card app-card--compact">
         <SelectField
           id="filter-type"
           label="Vehicle type"
@@ -103,19 +111,35 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {loading ? <p className="app-loading">Loading KPIs…</p> : null}
+      {loading ? <LoadingState label="Loading KPIs…" variant="grid" count={7} /> : null}
       {error ? <p className="app-error">{error}</p> : null}
 
       {!loading && !error && kpis ? (
-        <div className="kpi-grid">
-          {KPI_LABELS.map(({ key, label }) => (
-            <article key={key} className="kpi-card">
-              <p className="kpi-card__label">{label}</p>
-              <p className="kpi-card__value">{formatKpiValue(key, kpis[key])}</p>
-            </article>
-          ))}
+        <div key={refreshKey} className="dashboard-content">
+          <div className="kpi-grid">
+            {KPI_LABELS.map(({ key, label }, index) => (
+              <KpiCard
+                key={key}
+                label={label}
+                value={formatKpiValue(key, kpis[key])}
+                index={index}
+              />
+            ))}
+          </div>
+
+          <div className="chart-grid">
+            <ChartCard title="Fleet status" subtitle="Vehicle distribution" delay={200}>
+              <DashboardFleetChart kpis={kpis} />
+            </ChartCard>
+            <ChartCard title="Trip activity" subtitle="Active vs pending dispatches" delay={280}>
+              <DashboardTripsChart kpis={kpis} />
+            </ChartCard>
+            <ChartCard title="Utilization" subtitle="Vehicles currently on trip" className="chart-grid__wide" delay={360}>
+              <UtilizationGauge percent={kpis.fleetUtilizationPercent} />
+            </ChartCard>
+          </div>
         </div>
       ) : null}
-    </>
+    </div>
   )
 }
