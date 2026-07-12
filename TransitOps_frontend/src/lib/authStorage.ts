@@ -47,6 +47,24 @@ export function clearAuthSession(): void {
   sessionStorage.removeItem(STORAGE_KEY)
 }
 
+export function updateAuthSessionScopes(scopes: string[]): void {
+  const session = getAuthSession()
+  if (!session) {
+    return
+  }
+
+  const updated: AuthSession = {
+    ...session,
+    user: {
+      ...session.user,
+      scopes,
+    },
+  }
+
+  const storage = localStorage.getItem(STORAGE_KEY) ? localStorage : sessionStorage
+  storage.setItem(STORAGE_KEY, JSON.stringify(updated))
+}
+
 export function isAuthenticated(): boolean {
   return getAuthSession() !== null
 }

@@ -74,11 +74,41 @@
 .app-shell__topbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--color-input-border);
   background: var(--color-input-bg);
+}
+
+.app-shell__topbar-start {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.app-shell__topbar-divider {
+  width: 1px;
+  height: 1.5rem;
+  background: var(--color-input-border);
+  flex-shrink: 0;
+}
+
+.app-shell__depot-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-on-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-shell__topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
 }
 
 .app-shell__user {
@@ -300,6 +330,74 @@
 
 .app-error {
   color: var(--color-error);
+}
+
+.currency-select {
+  position: relative;
+}
+
+.currency-select__trigger {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.currency-select__panel {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.currency-select__search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-bottom: 1px solid var(--color-input-border);
+  background: var(--color-panel-dark);
+  color: var(--color-text-on-dark);
+  font-size: 0.875rem;
+}
+
+.currency-select__search:focus {
+  outline: none;
+}
+
+.currency-select__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.currency-select__option {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-on-dark);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.currency-select__option:hover,
+.currency-select__option--active {
+  background: var(--color-panel-dark);
+}
+
+.currency-select__empty {
+  padding: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
 }
 
 @media (max-width: 768px) {

@@ -1,9 +1,12 @@
 package com.transitops.service;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.transitops.dto.SessionResponse;
 import com.transitops.dto.SigninRequest;
 import com.transitops.dto.SigninResponse;
 import com.transitops.dto.SignupRequest;
@@ -83,6 +86,26 @@ public class AuthService {
 			.accessToken(jwtService.generateToken(user))
 			.tokenType("Bearer")
 			.expiresIn(jwtService.getExpirationSeconds())
+			.id(user.getId())
+			.username(user.getUsername())
+			.email(user.getEmail())
+			.role(user.getRole().getName())
+			.scopes(user.getRole().getScopes())
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public SessionResponse getSession() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || authentication.getPrincipal() == null) {
+			throw new UnauthorizedException("Authentication required");
+		}
+
+		String email = authentication.getPrincipal().toString();
+		User user = userRepository.findByEmail(email)
+			.orElseThrow(() -> new UnauthorizedException("Authentication required"));
+
+		return SessionResponse.builder()
 			.id(user.getId())
 			.username(user.getUsername())
 			.email(user.getEmail())

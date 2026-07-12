@@ -2,7 +2,11 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { Button } from '../components/Button'
 import { InputField } from '../components/InputField'
 import { ApiError, deleteAuth, getJson, postAuthJson } from '../lib/api'
+import { getAuthSession } from '../lib/authStorage'
 import { notifyError, notifySuccess } from '../lib/notify'
+import { canWriteFleet } from '../lib/scopes'
+import { useSettings } from '../context/SettingsContext'
+import { WEIGHT_UNIT } from '../constants/settings'
 import type { Vehicle, VehicleRequest } from '../types/vehicle'
 
 const EMPTY_FORM: VehicleRequest = {
@@ -15,6 +19,9 @@ const EMPTY_FORM: VehicleRequest = {
 }
 
 export function VehiclesPage() {
+  const session = getAuthSession()
+  const { formatters } = useSettings()
+  const canWrite = session ? canWriteFleet(session.user.scopes) : false
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [form, setForm] = useState<VehicleRequest>(EMPTY_FORM)
   const [loading, setLoading] = useState(true)
@@ -68,7 +75,7 @@ export function VehiclesPage() {
       await postAuthJson<Vehicle>('/api/vehicles', {
         ...form,
         maxLoadCapacity: Number(form.maxLoadCapacity),
-        odometer: Number(form.odometer),
+        odometer: formatters.displayToKm(Number(form.odometer)),
         acquisitionCost: Number(form.acquisitionCost),
       })
       notifySuccess('Vehicle registered')
@@ -110,10 +117,11 @@ export function VehiclesPage() {
     <>
       <header className="app-page__header">
         <h1 className="app-page__title">Vehicles</h1>
-        <p className="app-page__subtitle">Fleet registry</p>
+        <p className="app-page__subtitle">{canWrite ? 'Fleet registry' : 'Fleet overview (read-only)'}</p>
       </header>
 
       <div className="vehicles-layout">
+        {canWrite ? (
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
             Register vehicle
@@ -146,7 +154,7 @@ export function VehiclesPage() {
             />
             <InputField
               id="max-capacity"
-              label="Max load capacity (kg)"
+              label={`Max load capacity (${WEIGHT_UNIT})`}
               value={form.maxLoadCapacity === 0 ? '' : String(form.maxLoadCapacity)}
               onChange={(value) => updateField('maxLoadCapacity', Number(value) || 0)}
               error={fieldErrors.maxLoadCapacity}
@@ -154,7 +162,7 @@ export function VehiclesPage() {
             />
             <InputField
               id="odometer"
-              label="Odometer"
+              label={`Odometer (${formatters.distanceShort})`}
               value={form.odometer === 0 ? '' : String(form.odometer)}
               onChange={(value) => updateField('odometer', Number(value) || 0)}
               error={fieldErrors.odometer}
@@ -162,7 +170,7 @@ export function VehiclesPage() {
             />
             <InputField
               id="acquisition-cost"
-              label="Acquisition cost"
+              label={`Acquisition cost (${formatters.currencySymbol})`}
               value={form.acquisitionCost === 0 ? '' : String(form.acquisitionCost)}
               onChange={(value) => updateField('acquisitionCost', Number(value) || 0)}
               error={fieldErrors.acquisitionCost}
@@ -175,6 +183,7 @@ export function VehiclesPage() {
             </div>
           </form>
         </section>
+        ) : null}
 
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
@@ -195,7 +204,7 @@ export function VehiclesPage() {
                     <th>Type</th>
                     <th>Capacity</th>
                     <th>Status</th>
-                    <th />
+                    {canWrite ? <th /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -208,6 +217,7 @@ export function VehiclesPage() {
                       <td>
                         <span className="vehicles-table__status">{vehicle.status}</span>
                       </td>
+                      {canWrite ? (
                       <td>
                         <Button
                           variant="secondary"
@@ -218,6 +228,7 @@ export function VehiclesPage() {
                           {deletingId === vehicle.id ? '…' : 'Delete'}
                         </Button>
                       </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>

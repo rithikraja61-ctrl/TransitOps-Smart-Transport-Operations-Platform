@@ -2,7 +2,9 @@ import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { Button } from '../components/Button'
 import { InputField } from '../components/InputField'
 import { ApiError, deleteAuth, getJson, postAuthJson } from '../lib/api'
+import { getAuthSession } from '../lib/authStorage'
 import { notifyError, notifySuccess } from '../lib/notify'
+import { canWriteDrivers } from '../lib/scopes'
 import type { Driver, DriverRequest } from '../types/driver'
 
 const EMPTY_FORM: DriverRequest = {
@@ -15,6 +17,8 @@ const EMPTY_FORM: DriverRequest = {
 }
 
 export function DriversPage() {
+  const session = getAuthSession()
+  const canWrite = session ? canWriteDrivers(session.user.scopes) : false
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [form, setForm] = useState<DriverRequest>(EMPTY_FORM)
   const [loading, setLoading] = useState(true)
@@ -108,10 +112,11 @@ export function DriversPage() {
     <>
       <header className="app-page__header">
         <h1 className="app-page__title">Drivers</h1>
-        <p className="app-page__subtitle">Driver registry</p>
+        <p className="app-page__subtitle">{canWrite ? 'Driver registry' : 'Driver overview (read-only)'}</p>
       </header>
 
       <div className="vehicles-layout">
+        {canWrite ? (
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
             Register driver
@@ -174,6 +179,7 @@ export function DriversPage() {
             </div>
           </form>
         </section>
+        ) : null}
 
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
@@ -195,7 +201,7 @@ export function DriversPage() {
                     <th>Expiry</th>
                     <th>Score</th>
                     <th>Status</th>
-                    <th />
+                    {canWrite ? <th /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -209,6 +215,7 @@ export function DriversPage() {
                       <td>
                         <span className="vehicles-table__status">{driver.status}</span>
                       </td>
+                      {canWrite ? (
                       <td>
                         <Button
                           variant="secondary"
@@ -219,6 +226,7 @@ export function DriversPage() {
                           {deletingId === driver.id ? '…' : 'Delete'}
                         </Button>
                       </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>

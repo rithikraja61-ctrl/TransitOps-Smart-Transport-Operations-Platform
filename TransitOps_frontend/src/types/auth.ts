@@ -4,6 +4,14 @@ export type RoleName =
   | 'SAFETY_OFFICER'
   | 'FINANCIAL_ANALYST'
 
+export type SessionResponse = {
+  id: number
+  username: string
+  email: string
+  role: RoleName
+  scopes: string[]
+}
+
 export type SigninRequest = {
   email: string
   password: string

@@ -80,6 +80,7 @@ public class ReportService {
 	private String buildCsv(ReportSummaryResponse summary) {
 		StringBuilder csv = new StringBuilder();
 
+		csv.append("# units: distance=km,fuel=L,currency=INR\n");
 		csv.append("metric,value\n");
 		csv.append("avgFuelEfficiencyKmPerL,").append(summary.getAvgFuelEfficiencyKmPerL()).append('\n');
 		csv.append("fleetUtilizationPercent,").append(summary.getFleetUtilizationPercent()).append('\n');

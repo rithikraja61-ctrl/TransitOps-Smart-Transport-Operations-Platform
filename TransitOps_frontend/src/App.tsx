@@ -2,16 +2,27 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ScopeRoute } from './components/ScopeRoute'
+import { APP_NAV_ITEMS } from './constants/nav'
+import { SettingsProvider } from './context/SettingsContext'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DriversPage } from './pages/DriversPage'
 import { FuelExpensesPage } from './pages/FuelExpensesPage'
 import { MaintenancePage } from './pages/MaintenancePage'
+import { SettingsPage } from './pages/SettingsPage'
 import { SignInPage } from './pages/SignInPage'
 import { SignUpPage } from './pages/SignUpPage'
 import { TripsPage } from './pages/TripsPage'
 import { VehiclesPage } from './pages/VehiclesPage'
 import { AppShell } from './sections/app/AppShell'
+
+const dashboardScopes = APP_NAV_ITEMS.find((item) => item.path === '/')!.scopes
+const fleetScopes = APP_NAV_ITEMS.find((item) => item.path === '/vehicles')!.scopes
+const driversScopes = APP_NAV_ITEMS.find((item) => item.path === '/drivers')!.scopes
+const tripsScopes = APP_NAV_ITEMS.find((item) => item.path === '/trips')!.scopes
+const maintenanceScopes = APP_NAV_ITEMS.find((item) => item.path === '/maintenance')!.scopes
+const fuelScopes = APP_NAV_ITEMS.find((item) => item.path === '/fuel-expenses')!.scopes
+const analyticsScopes = APP_NAV_ITEMS.find((item) => item.path === '/analytics')!.scopes
 
 function App() {
   return (
@@ -22,14 +33,16 @@ function App() {
         <Route
           element={
             <ProtectedRoute>
-              <AppShell />
+              <SettingsProvider>
+                <AppShell />
+              </SettingsProvider>
             </ProtectedRoute>
           }
         >
           <Route
             path="/"
             element={
-              <ScopeRoute scope="data:dashboard">
+              <ScopeRoute scopes={dashboardScopes}>
                 <DashboardPage />
               </ScopeRoute>
             }
@@ -37,7 +50,7 @@ function App() {
           <Route
             path="/vehicles"
             element={
-              <ScopeRoute scope="data:fleet">
+              <ScopeRoute scopes={fleetScopes}>
                 <VehiclesPage />
               </ScopeRoute>
             }
@@ -45,7 +58,7 @@ function App() {
           <Route
             path="/drivers"
             element={
-              <ScopeRoute scope="data:drivers">
+              <ScopeRoute scopes={driversScopes}>
                 <DriversPage />
               </ScopeRoute>
             }
@@ -53,7 +66,7 @@ function App() {
           <Route
             path="/trips"
             element={
-              <ScopeRoute scope="data:trips">
+              <ScopeRoute scopes={tripsScopes}>
                 <TripsPage />
               </ScopeRoute>
             }
@@ -61,7 +74,7 @@ function App() {
           <Route
             path="/maintenance"
             element={
-              <ScopeRoute scope="data:maintenance">
+              <ScopeRoute scopes={maintenanceScopes}>
                 <MaintenancePage />
               </ScopeRoute>
             }
@@ -69,7 +82,7 @@ function App() {
           <Route
             path="/fuel-expenses"
             element={
-              <ScopeRoute scope="data:fuel_expenses">
+              <ScopeRoute scopes={fuelScopes}>
                 <FuelExpensesPage />
               </ScopeRoute>
             }
@@ -77,11 +90,12 @@ function App() {
           <Route
             path="/analytics"
             element={
-              <ScopeRoute scope="data:analytics">
+              <ScopeRoute scopes={analyticsScopes}>
                 <AnalyticsPage />
               </ScopeRoute>
             }
           />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/signin" replace />} />
       </Routes>

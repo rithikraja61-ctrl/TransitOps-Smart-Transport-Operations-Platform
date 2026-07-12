@@ -3,7 +3,11 @@ import { Button } from '../components/Button'
 import { InputField } from '../components/InputField'
 import { SelectField } from '../components/SelectField'
 import { ApiError, getJson, postAuthJson } from '../lib/api'
+import { getAuthSession } from '../lib/authStorage'
 import { notifyError, notifySuccess } from '../lib/notify'
+import { canWriteTrips } from '../lib/scopes'
+import { useSettings } from '../context/SettingsContext'
+import { WEIGHT_UNIT } from '../constants/settings'
 import type {
   DispatchOptions,
   Trip,
@@ -24,6 +28,9 @@ const EMPTY_FORM: TripRequest = {
 type ActionKind = 'dispatch' | 'complete' | 'cancel'
 
 export function TripsPage() {
+  const session = getAuthSession()
+  const { formatters } = useSettings()
+  const canWrite = session ? canWriteTrips(session.user.scopes) : false
   const [trips, setTrips] = useState<Trip[]>([])
   const [options, setOptions] = useState<DispatchOptions>({ vehicles: [], drivers: [] })
   const [form, setForm] = useState<TripRequest>(EMPTY_FORM)
@@ -39,19 +46,24 @@ export function TripsPage() {
     setLoading(true)
     setListError(null)
     try {
-      const [tripData, optionData] = await Promise.all([
-        getJson<Trip[]>('/api/trips'),
-        getJson<DispatchOptions>('/api/trips/dispatch-options'),
-      ])
-      setTrips(tripData)
-      setOptions(optionData)
+      if (canWrite) {
+        const [tripData, optionData] = await Promise.all([
+          getJson<Trip[]>('/api/trips'),
+          getJson<DispatchOptions>('/api/trips/dispatch-options'),
+        ])
+        setTrips(tripData)
+        setOptions(optionData)
+      } else {
+        const tripData = await getJson<Trip[]>('/api/trips')
+        setTrips(tripData)
+      }
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load trips'
       setListError(message)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [canWrite])
 
   useEffect(() => {
     void loadData()
@@ -90,7 +102,7 @@ export function TripsPage() {
         vehicleId: Number(form.vehicleId),
         driverId: Number(form.driverId),
         cargoWeight: Number(form.cargoWeight),
-        plannedDistance: Number(form.plannedDistance),
+        plannedDistance: formatters.displayToKm(Number(form.plannedDistance)),
       })
       notifySuccess('Trip created')
       setForm(EMPTY_FORM)
@@ -153,6 +165,10 @@ export function TripsPage() {
   ]
 
   function renderActions(trip: Trip) {
+    if (!canWrite) {
+      return null
+    }
+
     const busy = actionTripId === trip.id
     const actions: { kind: ActionKind; label: string; variant: 'primary' | 'secondary' }[] = []
 
@@ -189,10 +205,11 @@ export function TripsPage() {
     <>
       <header className="app-page__header">
         <h1 className="app-page__title">Trips</h1>
-        <p className="app-page__subtitle">Create and manage dispatches</p>
+        <p className="app-page__subtitle">{canWrite ? 'Create and manage dispatches' : 'View trip status'}</p>
       </header>
 
       <div className="vehicles-layout">
+        {canWrite ? (
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
             New trip
@@ -235,7 +252,7 @@ export function TripsPage() {
             />
             <InputField
               id="trip-cargo"
-              label="Cargo weight (kg)"
+              label={`Cargo weight (${WEIGHT_UNIT})`}
               value={form.cargoWeight === 0 ? '' : String(form.cargoWeight)}
               onChange={(value) => updateField('cargoWeight', Number(value) || 0)}
               error={fieldErrors.cargoWeight}
@@ -243,7 +260,7 @@ export function TripsPage() {
             />
             <InputField
               id="trip-distance"
-              label="Planned distance (km)"
+              label={`Planned distance (${formatters.distanceShort})`}
               value={form.plannedDistance === 0 ? '' : String(form.plannedDistance)}
               onChange={(value) => updateField('plannedDistance', Number(value) || 0)}
               error={fieldErrors.plannedDistance}
@@ -256,6 +273,7 @@ export function TripsPage() {
             </div>
           </form>
         </section>
+        ) : null}
 
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
@@ -276,7 +294,7 @@ export function TripsPage() {
                     <th>Driver</th>
                     <th>Cargo</th>
                     <th>Status</th>
-                    <th />
+                    {canWrite ? <th /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -293,7 +311,7 @@ export function TripsPage() {
                           {TRIP_STATUS_LABELS[trip.status as TripStatus]}
                         </span>
                       </td>
-                      <td>{renderActions(trip)}</td>
+                      {canWrite ? <td>{renderActions(trip)}</td> : null}
                     </tr>
                   ))}
                 </tbody>

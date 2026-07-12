@@ -3,7 +3,9 @@ import { Button } from '../components/Button'
 import { InputField } from '../components/InputField'
 import { SelectField } from '../components/SelectField'
 import { ApiError, getJson, postAuthJson } from '../lib/api'
+import { useSettings } from '../context/SettingsContext'
 import { notifyError, notifySuccess } from '../lib/notify'
+import { FUEL_VOLUME_UNIT } from '../constants/settings'
 import { EXPENSE_TYPE_OPTIONS, type Expense } from '../types/expense'
 import {
   ENTRY_TYPE_OPTIONS,
@@ -41,6 +43,7 @@ function emptyForm(): LogEntryForm {
 }
 
 export function FuelExpensesPage() {
+  const { formatters } = useSettings()
   const [vehicles, setVehicles] = useState<FuelVehicleOption[]>([])
   const [fuelLogs, setFuelLogs] = useState<FuelLog[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
@@ -215,7 +218,7 @@ export function FuelExpensesPage() {
               <>
                 <InputField
                   id="entry-liters"
-                  label="Liters"
+                  label={`Liters (${FUEL_VOLUME_UNIT})`}
                   value={form.liters ? String(form.liters) : ''}
                   onChange={(value) => updateField('liters', Number(value) || 0)}
                   error={fieldErrors.liters}
@@ -223,7 +226,7 @@ export function FuelExpensesPage() {
                 />
                 <InputField
                   id="entry-cost"
-                  label="Cost"
+                  label={`Cost (${formatters.currencySymbol})`}
                   value={form.cost ? String(form.cost) : ''}
                   onChange={(value) => updateField('cost', Number(value) || 0)}
                   error={fieldErrors.cost}
@@ -251,7 +254,7 @@ export function FuelExpensesPage() {
                 />
                 <InputField
                   id="entry-amount"
-                  label="Amount"
+                  label={`Amount (${formatters.currencySymbol})`}
                   value={form.amount ? String(form.amount) : ''}
                   onChange={(value) => updateField('amount', Number(value) || 0)}
                   error={fieldErrors.amount}
@@ -283,8 +286,8 @@ export function FuelExpensesPage() {
                   <tr>
                     <th>Date</th>
                     <th>Vehicle</th>
-                    <th>Liters</th>
-                    <th>Cost</th>
+                    <th>Liters ({FUEL_VOLUME_UNIT})</th>
+                    <th>Cost ({formatters.currencySymbol})</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -292,8 +295,8 @@ export function FuelExpensesPage() {
                     <tr key={log.id}>
                       <td>{log.logDate}</td>
                       <td>{log.vehicleRegistration}</td>
-                      <td>{log.liters}</td>
-                      <td>{log.cost}</td>
+                      <td>{formatters.formatLiters(log.liters)}</td>
+                      <td>{formatters.formatCurrency(log.cost)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -319,7 +322,7 @@ export function FuelExpensesPage() {
                     <th>Vehicle</th>
                     <th>Type</th>
                     <th>Description</th>
-                    <th>Amount</th>
+                    <th>Amount ({formatters.currencySymbol})</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -329,7 +332,7 @@ export function FuelExpensesPage() {
                       <td>{expense.vehicleRegistration}</td>
                       <td>{expense.type}</td>
                       <td>{expense.description ?? '—'}</td>
-                      <td>{expense.amount}</td>
+                      <td>{formatters.formatCurrency(expense.amount)}</td>
                     </tr>
                   ))}
                 </tbody>

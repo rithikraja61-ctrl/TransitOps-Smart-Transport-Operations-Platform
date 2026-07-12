@@ -1,5 +1,6 @@
 package com.transitops.config;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
@@ -20,12 +21,11 @@ public class RoleSeeder {
 				return;
 			}
 
-			roleRepository.saveAll(List.of(
-				new Role(RoleName.FLEET_MANAGER, List.of("data:fleet", "data:maintenance")),
-				new Role(RoleName.DISPATCHER, List.of("data:dashboard", "data:trips")),
-				new Role(RoleName.SAFETY_OFFICER, List.of("data:drivers", "data:compliance")),
-				new Role(RoleName.FINANCIAL_ANALYST, List.of("data:fuel_expenses", "data:analytics"))
-			));
+			List<Role> roles = new ArrayList<>();
+			for (var entry : RoleScopeDefinitions.all().entrySet()) {
+				roles.add(new Role(entry.getKey(), new ArrayList<>(entry.getValue())));
+			}
+			roleRepository.saveAll(roles);
 		};
 	}
 }

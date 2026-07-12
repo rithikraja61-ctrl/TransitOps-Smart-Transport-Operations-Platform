@@ -1,11 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '../../components/Button'
-import { APP_NAV_ITEMS } from '../../constants/nav'
+import { APP_NAV_ITEMS, SETTINGS_NAV } from '../../constants/nav'
 import { getRoleLabel } from '../../constants/roles'
+import { getJson } from '../../lib/api'
+import { hasAnyScope } from '../../lib/scopes'
 import { signOut } from '../../lib/auth'
-import { getAuthSession } from '../../lib/authStorage'
+import { getAuthSession, updateAuthSessionScopes } from '../../lib/authStorage'
 import { notifySuccess } from '../../lib/notify'
+import { useSettings } from '../../context/SettingsContext'
+import type { AuthSession, SessionResponse } from '../../types/auth'
 
 function userInitials(username: string): string {
   const parts = username.split(/[_\s-]+/).filter(Boolean)
@@ -19,12 +23,35 @@ export function AppShell() {
   const navigate = useNavigate()
   const location = useLocation()
   const [signingOut, setSigningOut] = useState(false)
-  const session = getAuthSession()
+  const [session, setSession] = useState<AuthSession | null>(() => getAuthSession())
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function refreshScopes() {
+      try {
+        const me = await getJson<SessionResponse>('/api/auth/me')
+        updateAuthSessionScopes(me.scopes)
+        if (!cancelled) {
+          setSession(getAuthSession())
+        }
+      } catch {
+        // Keep cached session if refresh fails.
+      }
+    }
+
+    void refreshScopes()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   if (!session) {
     return null
   }
 
+  const { settings } = useSettings()
   const { user } = session
 
   async function handleSignOut() {
@@ -48,7 +75,7 @@ export function AppShell() {
         <h1 className="app-shell__title">TransitOps</h1>
         <nav className="app-shell__nav">
           {APP_NAV_ITEMS.map((item) => {
-            const hasAccess = user.scopes.includes(item.scope)
+            const hasAccess = hasAnyScope(user.scopes, item.scopes)
             const isActive = location.pathname === item.path
 
             if (!hasAccess) {
@@ -73,11 +100,22 @@ export function AppShell() {
               </Link>
             )
           })}
+          <Link
+            to={SETTINGS_NAV.path}
+            className={`app-shell__nav-link${location.pathname === SETTINGS_NAV.path ? ' app-shell__nav-link--active' : ''}`}
+          >
+            {SETTINGS_NAV.label}
+          </Link>
         </nav>
       </aside>
 
       <div className="app-shell__content">
         <header className="app-shell__topbar">
+          <div className="app-shell__topbar-start">
+            <span className="app-shell__topbar-divider" aria-hidden="true" />
+            <span className="app-shell__depot-name">{settings.depotName}</span>
+          </div>
+          <div className="app-shell__topbar-end">
           <div className="app-shell__user">
             <div className="app-shell__avatar" aria-hidden="true">
               {userInitials(user.username)}
@@ -95,6 +133,7 @@ export function AppShell() {
           >
             {signingOut ? 'Signing out…' : 'Sign out'}
           </Button>
+          </div>
         </header>
 
         <main className="app-shell__main">

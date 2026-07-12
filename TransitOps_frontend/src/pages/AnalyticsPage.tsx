@@ -1,34 +1,41 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Button } from '../components/Button'
+import { useSettings } from '../context/SettingsContext'
 import { ApiError, downloadAuthFile, getJson } from '../lib/api'
 import { notifyError } from '../lib/notify'
 import {
-  ANALYTICS_KPI_LABELS,
+  getAnalyticsKpiLabels,
   type AnalyticsKpiKey,
   type ReportSummary,
 } from '../types/reports'
 
 const CHART_COLOR = '#f97316'
 
-function formatKpiValue(key: AnalyticsKpiKey, value: number): string {
-  if (key === 'fleetUtilizationPercent') {
-    return `${value.toFixed(1)}%`
-  }
-  if (key === 'avgFuelEfficiencyKmPerL') {
-    return `${value.toFixed(1)} km/L`
-  }
-  if (key === 'totalOperationalCost') {
-    return value.toFixed(2)
-  }
-  return String(value)
-}
-
 export function AnalyticsPage() {
+  const { formatters } = useSettings()
   const [summary, setSummary] = useState<ReportSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [exporting, setExporting] = useState(false)
+
+  const kpiLabels = useMemo(() => getAnalyticsKpiLabels(formatters), [formatters])
+
+  function formatKpiValue(key: AnalyticsKpiKey, value: number): string {
+    if (key === 'fleetUtilizationPercent') {
+      return formatters.formatPercent(value)
+    }
+    if (key === 'avgFuelEfficiencyKmPerL') {
+      return formatters.formatEfficiency(value)
+    }
+    if (key === 'totalOperationalCost') {
+      return formatters.formatCurrency(value)
+    }
+    if (key === 'totalDistanceKm') {
+      return formatters.formatDistance(value)
+    }
+    return String(value)
+  }
 
   const loadSummary = useCallback(async () => {
     setLoading(true)
@@ -86,7 +93,7 @@ export function AnalyticsPage() {
         {!loading && !error && summary ? (
           <>
             <div className="kpi-grid">
-              {ANALYTICS_KPI_LABELS.map(({ key, label }) => (
+              {kpiLabels.map(({ key, label }) => (
                 <article key={key} className="kpi-card">
                   <p className="kpi-card__label">{label}</p>
                   <p className="kpi-card__value">{formatKpiValue(key, summary[key])}</p>
@@ -105,7 +112,7 @@ export function AnalyticsPage() {
                   <BarChart data={summary.monthlyFuelSpend}>
                     <XAxis dataKey="month" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip formatter={(value) => formatters.formatCurrency(Number(value))} />
                     <Bar dataKey="amount" fill={CHART_COLOR} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -123,7 +130,7 @@ export function AnalyticsPage() {
                   <BarChart data={summary.expenseBreakdown} layout="vertical">
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="category" width={100} />
-                    <Tooltip />
+                    <Tooltip formatter={(value) => formatters.formatCurrency(Number(value))} />
                     <Bar dataKey="amount" fill={CHART_COLOR} />
                   </BarChart>
                 </ResponsiveContainer>
