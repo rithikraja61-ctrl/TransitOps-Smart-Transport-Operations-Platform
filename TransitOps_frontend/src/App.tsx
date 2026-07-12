@@ -6,6 +6,7 @@ import { getDefaultAppPath } from './constants/nav'
 import { getAuthSession } from './lib/authStorage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DriversPage } from './pages/DriversPage'
+import { FuelExpensesPage } from './pages/FuelExpensesPage'
 import { MaintenancePage } from './pages/MaintenancePage'
 import { SignInPage } from './pages/SignInPage'
 import { SignUpPage } from './pages/SignUpPage'
@@ -74,7 +75,14 @@ function App() {
               </ScopeRoute>
             }
           />
-          <Route path="/fuel-expenses" element={<DefaultRedirect />} />
+          <Route
+            path="/fuel-expenses"
+            element={
+              <ScopeRoute scope="data:fuel_expenses">
+                <FuelExpensesPage />
+              </ScopeRoute>
+            }
+          />
           <Route path="/analytics" element={<DefaultRedirect />} />
         </Route>
         <Route path="*" element={<Navigate to="/signin" replace />} />
