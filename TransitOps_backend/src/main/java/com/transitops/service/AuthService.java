@@ -4,14 +4,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.transitops.dto.SigninRequest;
+import com.transitops.dto.SigninResponse;
 import com.transitops.dto.SignupRequest;
 import com.transitops.dto.SignupResponse;
 import com.transitops.entity.Role;
 import com.transitops.entity.User;
 import com.transitops.exception.DuplicateResourceException;
 import com.transitops.exception.ResourceNotFoundException;
+import com.transitops.exception.UnauthorizedException;
 import com.transitops.repository.RoleRepository;
 import com.transitops.repository.UserRepository;
+import com.transitops.security.JwtService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +26,7 @@ public class AuthService {
 	private final UserRepository userRepository;
 	private final RoleRepository roleRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final JwtService jwtService;
 
 	@Transactional
 	public SignupResponse signup(SignupRequest request) {
@@ -52,6 +57,33 @@ public class AuthService {
 			.email(saved.getEmail())
 			.role(saved.getRole().getName())
 			.scopes(saved.getRole().getScopes())
+			.build();
+	}
+
+	@Transactional(readOnly = true)
+	public SigninResponse signin(SigninRequest request) {
+		String email = request.getEmail().trim().toLowerCase();
+
+		User user = userRepository.findByEmail(email)
+			.orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
+
+		if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+		if (!user.getRole().getName().equals(request.getRole())) {
+			throw new UnauthorizedException("Invalid credentials");
+		}
+
+		return SigninResponse.builder()
+			.accessToken(jwtService.generateToken(user))
+			.tokenType("Bearer")
+			.expiresIn(jwtService.getExpirationSeconds())
+			.id(user.getId())
+			.username(user.getUsername())
+			.email(user.getEmail())
+			.role(user.getRole().getName())
+			.scopes(user.getRole().getScopes())
 			.build();
 	}
 }

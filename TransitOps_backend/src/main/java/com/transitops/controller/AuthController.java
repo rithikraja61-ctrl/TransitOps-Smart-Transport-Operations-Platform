@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transitops.dto.SigninRequest;
+import com.transitops.dto.SigninResponse;
 import com.transitops.dto.SignupRequest;
 import com.transitops.dto.SignupResponse;
 import com.transitops.service.AuthService;
@@ -25,5 +27,10 @@ public class AuthController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public SignupResponse signup(@Valid @RequestBody SignupRequest request) {
 		return authService.signup(request);
+	}
+
+	@PostMapping("/signin")
+	public SigninResponse signin(@Valid @RequestBody SigninRequest request) {
+		return authService.signin(request);
 	}
 }
