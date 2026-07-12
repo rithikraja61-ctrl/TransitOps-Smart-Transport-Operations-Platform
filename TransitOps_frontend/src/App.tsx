@@ -6,6 +6,7 @@ import { getDefaultAppPath } from './constants/nav'
 import { getAuthSession } from './lib/authStorage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DriversPage } from './pages/DriversPage'
+import { MaintenancePage } from './pages/MaintenancePage'
 import { SignInPage } from './pages/SignInPage'
 import { SignUpPage } from './pages/SignUpPage'
 import { TripsPage } from './pages/TripsPage'
@@ -65,7 +66,14 @@ function App() {
               </ScopeRoute>
             }
           />
-          <Route path="/maintenance" element={<DefaultRedirect />} />
+          <Route
+            path="/maintenance"
+            element={
+              <ScopeRoute scope="data:maintenance">
+                <MaintenancePage />
+              </ScopeRoute>
+            }
+          />
           <Route path="/fuel-expenses" element={<DefaultRedirect />} />
           <Route path="/analytics" element={<DefaultRedirect />} />
         </Route>
