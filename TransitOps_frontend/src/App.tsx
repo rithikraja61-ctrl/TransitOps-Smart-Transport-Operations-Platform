@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { DriversPage } from './pages/DriversPage'
 import { SignInPage } from './pages/SignInPage'
 import { SignUpPage } from './pages/SignUpPage'
+import { TripsPage } from './pages/TripsPage'
 import { VehiclesPage } from './pages/VehiclesPage'
 import { AppShell } from './sections/app/AppShell'
 
@@ -56,7 +57,14 @@ function App() {
               </ScopeRoute>
             }
           />
-          <Route path="/trips" element={<DefaultRedirect />} />
+          <Route
+            path="/trips"
+            element={
+              <ScopeRoute scope="data:trips">
+                <TripsPage />
+              </ScopeRoute>
+            }
+          />
           <Route path="/maintenance" element={<DefaultRedirect />} />
           <Route path="/fuel-expenses" element={<DefaultRedirect />} />
           <Route path="/analytics" element={<DefaultRedirect />} />
