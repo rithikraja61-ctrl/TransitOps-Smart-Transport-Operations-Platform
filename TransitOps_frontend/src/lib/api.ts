@@ -58,10 +58,48 @@ export async function authFetch(
     headers.set('Authorization', `Bearer ${session.accessToken}`)
   }
 
-  return fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
+  try {
+    return await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers,
+    })
+  } catch {
+    throw new ApiError(
+      0,
+      `Cannot reach API at ${API_BASE}. Is the backend running on port 8081?`,
+    )
+  }
+}
+
+async function parseJsonResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    throw await parseErrorResponse(response)
+  }
+
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  return response.json() as Promise<T>
+}
+
+export async function getJson<T>(path: string): Promise<T> {
+  const response = await authFetch(path)
+  return parseJsonResponse<T>(response)
+}
+
+export async function postAuthJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await authFetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   })
+  return parseJsonResponse<T>(response)
+}
+
+export async function deleteAuth(path: string): Promise<void> {
+  const response = await authFetch(path, { method: 'DELETE' })
+  await parseJsonResponse<void>(response)
 }
 
 export async function logout(): Promise<void> {

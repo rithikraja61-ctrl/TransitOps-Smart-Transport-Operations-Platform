@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { postJson } from '../lib/api'
-import { isAuthenticated, saveAuthSession } from '../lib/authStorage'
+import { getDefaultAppPath } from '../constants/nav'
+import { getAuthSession, isAuthenticated, saveAuthSession } from '../lib/authStorage'
 import { getErrorMessage, notifyError, notifySuccess } from '../lib/notify'
 import { AuthLayout } from '../sections/auth/AuthLayout'
 import { SignInFormSection } from '../sections/auth/SignInFormSection'
@@ -24,7 +25,8 @@ export function SignInPage() {
   }, [registered])
 
   if (isAuthenticated()) {
-    return <Navigate to="/" replace />
+    const session = getAuthSession()
+    return <Navigate to={session ? getDefaultAppPath(session.user.scopes) : '/'} replace />
   }
 
   async function handleSubmit(data: {
@@ -49,7 +51,7 @@ export function SignInPage() {
     try {
       const response = await postJson<SigninResponse>('/api/auth/signin', payload)
       saveAuthSession(response, data.rememberMe)
-      navigate('/', { replace: true })
+      navigate(getDefaultAppPath(response.scopes), { replace: true })
     } catch (err) {
       const message = getErrorMessage(err, 'Unable to sign in. Please try again.')
       notifyError(message)
