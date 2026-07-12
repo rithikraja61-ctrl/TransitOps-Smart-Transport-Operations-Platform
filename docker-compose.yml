@@ -3,11 +3,7 @@ services:
     image: mysql:8.4
     container_name: transitops-mysql
     restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-transitops}
-      MYSQL_USER: ${MYSQL_USER:-transitops}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-transitops}
+    env_file: .env
     ports:
       - "3307:3306"
     volumes:
@@ -24,14 +20,14 @@ services:
       context: ./TransitOps_backend
     container_name: transitops-backend
     restart: unless-stopped
+    env_file: .env
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-transitops}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-transitops}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-transitops}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "8081:8080"
 
@@ -40,10 +36,9 @@ services:
       context: ./TransitOps_frontend
     container_name: transitops-frontend
     restart: unless-stopped
+    env_file: .env
     depends_on:
       - backend
-    environment:
-      VITE_API_BASE_URL: http://localhost:8081
     ports:
       - "5173:5173"
 
