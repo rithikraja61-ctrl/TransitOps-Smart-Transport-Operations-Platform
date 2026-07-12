@@ -1,7 +1,7 @@
 type InputFieldProps = {
   id: string
   label: string
-  type?: 'text' | 'email' | 'password'
+  type?: 'text' | 'email' | 'password' | 'date'
   value: string
   onChange: (value: string) => void
   error?: string

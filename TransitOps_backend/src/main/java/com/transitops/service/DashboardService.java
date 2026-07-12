@@ -1,10 +1,14 @@
 package com.transitops.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.transitops.dto.DashboardKpisResponse;
+import com.transitops.entity.DriverStatus;
 import com.transitops.entity.VehicleStatus;
+import com.transitops.repository.DriverRepository;
 import com.transitops.repository.VehicleRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -14,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class DashboardService {
 
 	private final VehicleRepository vehicleRepository;
+	private final DriverRepository driverRepository;
 
 	@Transactional(readOnly = true)
 	public DashboardKpisResponse getKpis(String vehicleType, VehicleStatus vehicleStatus) {
@@ -50,14 +55,18 @@ public class DashboardService {
 			? 0.0
 			: (onTripVehicles * 100.0) / activeVehicles;
 
-		// ponytail: stub until Trip + Driver modules exist
+		long driversOnDuty = driverRepository.countByStatusIn(
+			List.of(DriverStatus.AVAILABLE, DriverStatus.ON_TRIP)
+		);
+
+		// ponytail: stub until Trip module exists
 		return DashboardKpisResponse.builder()
 			.activeVehicles(activeVehicles)
 			.availableVehicles(availableVehicles)
 			.vehiclesInMaintenance(vehiclesInMaintenance)
 			.activeTrips(0)
 			.pendingTrips(0)
-			.driversOnDuty(0)
+			.driversOnDuty(driversOnDuty)
 			.fleetUtilizationPercent(fleetUtilizationPercent)
 			.build();
 	}

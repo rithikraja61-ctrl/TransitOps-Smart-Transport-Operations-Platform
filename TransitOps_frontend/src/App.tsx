@@ -5,6 +5,7 @@ import { ScopeRoute } from './components/ScopeRoute'
 import { getDefaultAppPath } from './constants/nav'
 import { getAuthSession } from './lib/authStorage'
 import { DashboardPage } from './pages/DashboardPage'
+import { DriversPage } from './pages/DriversPage'
 import { SignInPage } from './pages/SignInPage'
 import { SignUpPage } from './pages/SignUpPage'
 import { VehiclesPage } from './pages/VehiclesPage'
@@ -47,7 +48,14 @@ function App() {
               </ScopeRoute>
             }
           />
-          <Route path="/drivers" element={<DefaultRedirect />} />
+          <Route
+            path="/drivers"
+            element={
+              <ScopeRoute scope="data:drivers">
+                <DriversPage />
+              </ScopeRoute>
+            }
+          />
           <Route path="/trips" element={<DefaultRedirect />} />
           <Route path="/maintenance" element={<DefaultRedirect />} />
           <Route path="/fuel-expenses" element={<DefaultRedirect />} />
