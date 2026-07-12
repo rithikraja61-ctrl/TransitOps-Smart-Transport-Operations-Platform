@@ -115,7 +115,7 @@ export function DriversPage() {
         <p className="app-page__subtitle">{canWrite ? 'Driver registry' : 'Driver overview (read-only)'}</p>
       </header>
 
-      <div className="vehicles-layout">
+      <div className={`vehicles-layout${canWrite ? '' : ' vehicles-layout--single'}`}>
         {canWrite ? (
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>

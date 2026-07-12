@@ -18,6 +18,13 @@ export const VEHICLE_STATUS_OPTIONS: { value: VehicleStatus | ''; label: string 
   { value: 'RETIRED', label: 'Retired' },
 ]
 
+export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
+  AVAILABLE: 'Available',
+  ON_TRIP: 'On trip',
+  IN_SHOP: 'In shop',
+  RETIRED: 'Retired',
+}
+
 export const KPI_LABELS: { key: keyof DashboardKpis; label: string }[] = [
   { key: 'activeVehicles', label: 'Active Vehicles' },
   { key: 'availableVehicles', label: 'Available Vehicles' },

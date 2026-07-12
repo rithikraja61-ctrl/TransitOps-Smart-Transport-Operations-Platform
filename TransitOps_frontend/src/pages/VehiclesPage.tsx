@@ -1,13 +1,16 @@
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { Button } from '../components/Button'
 import { InputField } from '../components/InputField'
+import { LoadingState } from '../components/LoadingState'
 import { ApiError, deleteAuth, getJson, postAuthJson } from '../lib/api'
 import { getAuthSession } from '../lib/authStorage'
 import { notifyError, notifySuccess } from '../lib/notify'
 import { canWriteFleet } from '../lib/scopes'
 import { useSettings } from '../context/SettingsContext'
 import { WEIGHT_UNIT } from '../constants/settings'
+import { VEHICLE_STATUS_LABELS } from '../types/dashboard'
 import type { Vehicle, VehicleRequest } from '../types/vehicle'
+import type { VehicleStatus } from '../types/dashboard'
 
 const EMPTY_FORM: VehicleRequest = {
   registrationNumber: '',
@@ -16,6 +19,10 @@ const EMPTY_FORM: VehicleRequest = {
   maxLoadCapacity: 0,
   odometer: 0,
   acquisitionCost: 0,
+}
+
+function statusClass(status: VehicleStatus): string {
+  return `vehicles-table__status vehicles-table__status--${status.toLowerCase()}`
 }
 
 export function VehiclesPage() {
@@ -117,10 +124,13 @@ export function VehiclesPage() {
     <>
       <header className="app-page__header">
         <h1 className="app-page__title">Vehicles</h1>
-        <p className="app-page__subtitle">{canWrite ? 'Fleet registry' : 'Fleet overview (read-only)'}</p>
+        <p className="app-page__subtitle">
+          {canWrite ? 'Fleet registry' : 'Fleet overview'}
+          {!canWrite ? <span className="read-only-badge" style={{ marginLeft: '0.75rem' }}>View only</span> : null}
+        </p>
       </header>
 
-      <div className="vehicles-layout">
+      <div className={`vehicles-layout${canWrite ? '' : ' vehicles-layout--single'}`}>
         {canWrite ? (
         <section className="app-card">
           <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
@@ -185,11 +195,16 @@ export function VehiclesPage() {
         </section>
         ) : null}
 
-        <section className="app-card">
-          <h2 className="app-page__title" style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>
-            Fleet list
-          </h2>
-          {loading ? <p className="app-loading">Loading vehicles…</p> : null}
+        <section className="app-card list-panel">
+          <div className="list-panel__meta">
+            <h2 className="app-page__title" style={{ fontSize: '1.125rem', margin: 0 }}>
+              Fleet list
+            </h2>
+            {!loading && !listError ? (
+              <p className="list-panel__count">{vehicles.length} vehicle{vehicles.length === 1 ? '' : 's'}</p>
+            ) : null}
+          </div>
+          {loading ? <LoadingState label="Loading vehicles…" /> : null}
           {listError ? <p className="app-error">{listError}</p> : null}
           {!loading && !listError && vehicles.length === 0 ? (
             <p className="app-card--empty">No vehicles registered yet.</p>
@@ -203,6 +218,12 @@ export function VehiclesPage() {
                     <th>Name</th>
                     <th>Type</th>
                     <th>Capacity</th>
+                    {!canWrite ? (
+                      <>
+                        <th>Odometer</th>
+                        <th>Acquisition</th>
+                      </>
+                    ) : null}
                     <th>Status</th>
                     {canWrite ? <th /> : null}
                   </tr>
@@ -213,9 +234,17 @@ export function VehiclesPage() {
                       <td>{vehicle.registrationNumber}</td>
                       <td>{vehicle.name}</td>
                       <td>{vehicle.type}</td>
-                      <td>{vehicle.maxLoadCapacity} kg</td>
+                      <td>{formatters.formatWeight(vehicle.maxLoadCapacity)}</td>
+                      {!canWrite ? (
+                        <>
+                          <td>{formatters.formatDistance(vehicle.odometer)}</td>
+                          <td>{formatters.formatCurrency(vehicle.acquisitionCost)}</td>
+                        </>
+                      ) : null}
                       <td>
-                        <span className="vehicles-table__status">{vehicle.status}</span>
+                        <span className={statusClass(vehicle.status)}>
+                          {VEHICLE_STATUS_LABELS[vehicle.status]}
+                        </span>
                       </td>
                       {canWrite ? (
                       <td>
