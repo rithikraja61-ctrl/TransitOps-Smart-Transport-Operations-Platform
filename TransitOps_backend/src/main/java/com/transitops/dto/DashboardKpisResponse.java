@@ -10,6 +10,8 @@ public class DashboardKpisResponse {
 	long activeVehicles;
 	long availableVehicles;
 	long vehiclesInMaintenance;
+	long onTripVehicles;
+	long retiredVehicles;
 	long activeTrips;
 	long pendingTrips;
 	long driversOnDuty;

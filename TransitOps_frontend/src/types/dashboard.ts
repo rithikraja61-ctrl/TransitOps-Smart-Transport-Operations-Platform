@@ -2,6 +2,8 @@ export type DashboardKpis = {
   activeVehicles: number
   availableVehicles: number
   vehiclesInMaintenance: number
+  onTripVehicles: number
+  retiredVehicles: number
   activeTrips: number
   pendingTrips: number
   driversOnDuty: number

@@ -17,22 +17,23 @@ import {
   chartTooltipStyle,
 } from '../../lib/chartTheme'
 
-const STATUS_COLORS = [CHART_COLORS.success, CHART_COLORS.primary, CHART_COLORS.info]
+const STATUS_COLORS = [
+  CHART_COLORS.success,
+  CHART_COLORS.primary,
+  CHART_COLORS.info,
+  CHART_COLORS.muted,
+]
 
 type DashboardFleetChartProps = {
   kpis: DashboardKpis
 }
 
 export function DashboardFleetChart({ kpis }: DashboardFleetChartProps) {
-  const onTrip = Math.max(
-    0,
-    kpis.activeVehicles - kpis.availableVehicles - kpis.vehiclesInMaintenance,
-  )
-
   const data = [
     { name: 'Available', value: kpis.availableVehicles },
-    { name: 'On trip', value: onTrip },
+    { name: 'On trip', value: kpis.onTripVehicles },
     { name: 'Maintenance', value: kpis.vehiclesInMaintenance },
+    { name: 'Retired', value: kpis.retiredVehicles },
   ]
 
   return (

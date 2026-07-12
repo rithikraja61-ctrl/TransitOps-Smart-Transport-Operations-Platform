@@ -302,6 +302,13 @@
   line-height: 1.2;
 }
 
+.dashboard-filter-summary {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
 .dashboard-filters {
   display: flex;
   flex-wrap: wrap;

@@ -10,6 +10,7 @@ import { SelectField } from '../components/SelectField'
 import { ApiError, getJson } from '../lib/api'
 import {
   KPI_LABELS,
+  VEHICLE_STATUS_LABELS,
   VEHICLE_STATUS_OPTIONS,
   type DashboardKpis,
   type VehicleStatus,
@@ -29,12 +30,29 @@ function formatKpiValue(key: keyof DashboardKpis, value: number): string {
   return String(value)
 }
 
+function formatFilterSummary(type: string, status: VehicleStatus | ''): string | null {
+  if (!type && !status) {
+    return null
+  }
+
+  const parts: string[] = []
+  if (type) {
+    parts.push(type)
+  }
+  if (status) {
+    parts.push(VEHICLE_STATUS_LABELS[status])
+  }
+  return parts.join(' · ')
+}
+
 export function DashboardPage() {
   const [kpis, setKpis] = useState<DashboardKpis | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [vehicleType, setVehicleType] = useState('')
   const [vehicleStatus, setVehicleStatus] = useState<VehicleStatus | ''>('')
+  const [appliedType, setAppliedType] = useState('')
+  const [appliedStatus, setAppliedStatus] = useState<VehicleStatus | ''>('')
   const [refreshKey, setRefreshKey] = useState(0)
 
   const loadKpis = useCallback(async (type: string, status: VehicleStatus | '') => {
@@ -55,6 +73,8 @@ export function DashboardPage() {
     try {
       const data = await getJson<DashboardKpis>(path)
       setKpis(data)
+      setAppliedType(type)
+      setAppliedStatus(status)
       setRefreshKey((prev) => prev + 1)
     } catch (err) {
       const message = err instanceof ApiError ? err.message : 'Failed to load dashboard'
@@ -79,11 +99,16 @@ export function DashboardPage() {
     void loadKpis('', '')
   }
 
+  const filterSummary = formatFilterSummary(appliedType, appliedStatus)
+
   return (
     <div>
       <header className="app-page__header">
         <h1 className="app-page__title">Dashboard</h1>
         <p className="app-page__subtitle">Fleet operations at a glance</p>
+        {filterSummary ? (
+          <p className="dashboard-filter-summary">Showing: {filterSummary}</p>
+        ) : null}
       </header>
 
       <div className="dashboard-filters app-card app-card--compact">
