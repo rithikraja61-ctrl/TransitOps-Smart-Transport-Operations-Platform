@@ -8,7 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.transitops.dto.DashboardKpisResponse;
 import com.transitops.entity.DriverStatus;
 import com.transitops.entity.VehicleStatus;
+import com.transitops.entity.TripStatus;
 import com.transitops.repository.DriverRepository;
+import com.transitops.repository.TripRepository;
 import com.transitops.repository.VehicleRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class DashboardService {
 
 	private final VehicleRepository vehicleRepository;
 	private final DriverRepository driverRepository;
+	private final TripRepository tripRepository;
 
 	@Transactional(readOnly = true)
 	public DashboardKpisResponse getKpis(String vehicleType, VehicleStatus vehicleStatus) {
@@ -59,13 +62,15 @@ public class DashboardService {
 			List.of(DriverStatus.AVAILABLE, DriverStatus.ON_TRIP)
 		);
 
-		// ponytail: stub until Trip module exists
+		long activeTrips = tripRepository.countByStatus(TripStatus.DISPATCHED);
+		long pendingTrips = tripRepository.countByStatus(TripStatus.DRAFT);
+
 		return DashboardKpisResponse.builder()
 			.activeVehicles(activeVehicles)
 			.availableVehicles(availableVehicles)
 			.vehiclesInMaintenance(vehiclesInMaintenance)
-			.activeTrips(0)
-			.pendingTrips(0)
+			.activeTrips(activeTrips)
+			.pendingTrips(pendingTrips)
 			.driversOnDuty(driversOnDuty)
 			.fleetUtilizationPercent(fleetUtilizationPercent)
 			.build();

@@ -98,6 +98,16 @@ public class GlobalExceptionHandler {
 			.build());
 	}
 
+	@ExceptionHandler(BusinessRuleException.class)
+	public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex) {
+		return ResponseEntity.badRequest().body(ErrorResponse.builder()
+			.status(HttpStatus.BAD_REQUEST.value())
+			.error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+			.message("Validation failed")
+			.errors(Map.of(ex.getField(), ex.getMessage()))
+			.build());
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

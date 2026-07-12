@@ -1,6 +1,8 @@
 package com.transitops.repository;
 
+import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -16,4 +18,6 @@ public interface DriverRepository extends JpaRepository<Driver, Long> {
 	long countByStatus(DriverStatus status);
 
 	long countByStatusIn(Collection<DriverStatus> statuses);
+
+	List<Driver> findByStatusAndLicenseExpiryDateGreaterThanEqual(DriverStatus status, LocalDate minExpiry);
 }
