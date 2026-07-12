@@ -102,6 +102,21 @@ export async function deleteAuth(path: string): Promise<void> {
   await parseJsonResponse<void>(response)
 }
 
+export async function downloadAuthFile(path: string, filename: string): Promise<void> {
+  const response = await authFetch(path)
+  if (!response.ok) {
+    throw await parseErrorResponse(response)
+  }
+
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function logout(): Promise<void> {
   const response = await authFetch('/api/auth/logout', { method: 'POST' })
   if (!response.ok) {

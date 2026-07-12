@@ -2,8 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { ScopeRoute } from './components/ScopeRoute'
-import { getDefaultAppPath } from './constants/nav'
-import { getAuthSession } from './lib/authStorage'
+import { AnalyticsPage } from './pages/AnalyticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DriversPage } from './pages/DriversPage'
 import { FuelExpensesPage } from './pages/FuelExpensesPage'
@@ -13,14 +12,6 @@ import { SignUpPage } from './pages/SignUpPage'
 import { TripsPage } from './pages/TripsPage'
 import { VehiclesPage } from './pages/VehiclesPage'
 import { AppShell } from './sections/app/AppShell'
-
-function DefaultRedirect() {
-  const session = getAuthSession()
-  if (!session) {
-    return <Navigate to="/signin" replace />
-  }
-  return <Navigate to={getDefaultAppPath(session.user.scopes)} replace />
-}
 
 function App() {
   return (
@@ -83,7 +74,14 @@ function App() {
               </ScopeRoute>
             }
           />
-          <Route path="/analytics" element={<DefaultRedirect />} />
+          <Route
+            path="/analytics"
+            element={
+              <ScopeRoute scope="data:analytics">
+                <AnalyticsPage />
+              </ScopeRoute>
+            }
+          />
         </Route>
         <Route path="*" element={<Navigate to="/signin" replace />} />
       </Routes>

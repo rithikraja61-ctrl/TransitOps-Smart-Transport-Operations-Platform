@@ -102,7 +102,6 @@ export function FuelExpensesPage() {
       const next = { ...prev }
       delete next.liters
       delete next.cost
-      delete next.type
       delete next.expenseType
       delete next.description
       delete next.amount
