@@ -17,6 +17,9 @@ import com.transitops.repository.RoleRepository;
 import com.transitops.repository.UserRepository;
 import com.transitops.security.JwtService;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,6 +30,7 @@ public class AuthService {
 	private final RoleRepository roleRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtService jwtService;
+	private final TokenBlacklistService tokenBlacklistService;
 
 	@Transactional
 	public SignupResponse signup(SignupRequest request) {
@@ -85,5 +89,29 @@ public class AuthService {
 			.role(user.getRole().getName())
 			.scopes(user.getRole().getScopes())
 			.build();
+	}
+
+	@Transactional
+	public void logout(String authorization) {
+		if (authorization == null || !authorization.startsWith("Bearer ")) {
+			throw new UnauthorizedException("Authentication required");
+		}
+
+		String token = authorization.substring(7);
+		Claims claims;
+		try {
+			claims = jwtService.parseToken(token);
+		} catch (ExpiredJwtException ex) {
+			throw new UnauthorizedException("Authentication required");
+		} catch (JwtException ex) {
+			throw new UnauthorizedException("Authentication required");
+		}
+
+		String jti = JwtService.getJti(claims);
+		if (jti == null || jti.isBlank()) {
+			throw new UnauthorizedException("Authentication required");
+		}
+
+		tokenBlacklistService.revoke(jti, JwtService.getExpiresAt(claims));
 	}
 }

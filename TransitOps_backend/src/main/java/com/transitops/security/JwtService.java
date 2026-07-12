@@ -1,8 +1,10 @@
 package com.transitops.security;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -38,6 +40,7 @@ public class JwtService {
 		String scope = String.join(" ", user.getRole().getScopes());
 
 		return Jwts.builder()
+			.id(UUID.randomUUID().toString())
 			.subject(String.valueOf(user.getId()))
 			.claim("email", user.getEmail())
 			.claim("role", user.getRole().getName().name())
@@ -58,6 +61,14 @@ public class JwtService {
 
 	public long getExpirationSeconds() {
 		return jwtProperties.getExpirationMs() / 1000L;
+	}
+
+	public static String getJti(Claims claims) {
+		return claims.getId();
+	}
+
+	public static Instant getExpiresAt(Claims claims) {
+		return claims.getExpiration().toInstant();
 	}
 
 	public static List<String> scopesFromClaims(Claims claims) {
